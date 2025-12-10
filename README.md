@@ -333,8 +333,6 @@ bus_fee_portal/
 ### Bus List (Admin View)
 ![Bus List](screenshots/admin_bus_list.png)
 
-### Students Under Bus Route
-![Bus Students](screenshots/admin_bus_students.png)
 
 ### Add Student Interface
 ![Add Student](screenshots/admin_add_student.png)
@@ -421,3 +419,4 @@ If you encounter any issues or have questions about the Bus Fee Portal, please o
 ---
 
 **If you find this project useful, please consider giving it a star on GitHub to support its development.**
+

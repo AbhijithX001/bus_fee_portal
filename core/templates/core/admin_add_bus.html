@@ -1,18 +1,18 @@
 {% extends "core/base.html" %}
-{% block title %}Add Student{% endblock %}
+{% block title %}Add Bus{% endblock %}
 
 {% block content %}
 <div class="container py-4 d-flex justify-content-center">
   <div class="card shadow-sm p-4" style="max-width: 500px; width: 100%;">
-    <h4 class="fw-semibold mb-3">Add Student to Bus {{ bus.bus_number }}</h4>
+    <h4 class="fw-semibold mb-3">Add Bus</h4>
 
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
 
       <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Add</button>
-        <a href="{% url 'admin_bus_students' bus.id %}" class="btn btn-light ms-2">Cancel</a>
+        <button type="submit" class="btn btn-primary">Create Bus</button>
+        <a href="{% url 'admin_bus_list' %}" class="btn btn-light ms-2">Cancel</a>
       </div>
     </form>
   </div>

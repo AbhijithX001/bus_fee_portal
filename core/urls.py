@@ -6,6 +6,7 @@ from .views import (
     student_dashboard,
     admin_dashboard,
     admin_bus_list,
+    admin_add_bus,
     admin_bus_students,
     admin_add_student,
     admin_edit_student,
@@ -14,7 +15,7 @@ from .views import (
     admin_fee_update,
     create_razorpay_order,
     verify_payment,
-    razorpay_webhook
+    razorpay_webhook,
 )
 
 urlpatterns = [
@@ -27,8 +28,9 @@ urlpatterns = [
     path("admin/dashboard/", admin_dashboard, name="admin_dashboard"),
 
     path("admin/buses/", admin_bus_list, name="admin_bus_list"),
-    path("admin/buses/<int:bus_number>/", admin_bus_students, name="admin_bus_students"),
-    path("admin/buses/<int:bus_number>/add/", admin_add_student, name="admin_add_student"),
+    path("admin/buses/add/", admin_add_bus, name="admin_add_bus"),
+    path("admin/buses/<int:bus_id>/", admin_bus_students, name="admin_bus_students"),
+    path("admin/buses/<int:bus_id>/add-student/", admin_add_student, name="admin_add_student"),
 
     path("admin/student/<int:student_id>/edit/", admin_edit_student, name="admin_edit_student"),
     path("admin/student/<int:student_id>/delete/", admin_delete_student, name="admin_delete_student"),

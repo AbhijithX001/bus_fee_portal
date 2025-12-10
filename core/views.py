@@ -6,12 +6,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.urls import reverse
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from .models import StudentProfile, FeeRecord, PaymentOrder
-from .forms import AdminCreateStudentForm
+
+from .models import StudentProfile, FeeRecord, PaymentOrder, Bus
+from .forms import AdminCreateStudentForm, AdminEditStudentForm, BusForm
 from .decorators import role_required
 
 
@@ -53,52 +53,60 @@ def student_dashboard(request):
 @login_required
 @role_required("admin")
 def admin_dashboard(request):
-    buses = StudentProfile.objects.values("bus_number").distinct().order_by("bus_number")
-    data = []
-    for b in buses:
-        count = StudentProfile.objects.filter(bus_number=b["bus_number"]).count()
-        data.append({"bus_number": b["bus_number"], "count": count})
-    return render(request, "core/admin_dashboard.html", {"bus_data": data})
+    buses = Bus.objects.all().order_by("bus_number")
+    return render(request, "core/admin_dashboard.html", {"buses": buses})
 
 
 @login_required
 @role_required("admin")
 def admin_bus_list(request):
-    buses = StudentProfile.objects.values("bus_number").distinct().order_by("bus_number")
-    data = []
-    for b in buses:
-        count = StudentProfile.objects.filter(bus_number=b["bus_number"]).count()
-        data.append({"bus_number": b["bus_number"], "count": count})
-    return render(request, "core/admin_bus_list.html", {"bus_data": data})
+    buses = Bus.objects.all().order_by("bus_number")
+    return render(request, "core/admin_bus_list.html", {"buses": buses})
 
 
 @login_required
 @role_required("admin")
-def admin_bus_students(request, bus_number):
-    students = StudentProfile.objects.filter(bus_number=bus_number).order_by("full_name")
+def admin_add_bus(request):
+    if request.method == "POST":
+        form = BusForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("admin_bus_list")
+    else:
+        form = BusForm()
+    return render(request, "core/admin_add_bus.html", {"form": form})
+
+
+@login_required
+@role_required("admin")
+def admin_bus_students(request, bus_id):
+    bus = get_object_or_404(Bus, id=bus_id)
+    students = StudentProfile.objects.filter(bus=bus).order_by("full_name")
     return render(request, "core/admin_bus_students.html", {
-        "bus_number": bus_number,
+        "bus": bus,
         "students": students
     })
 
 
 @login_required
 @role_required("admin")
-def admin_add_student(request, bus_number):
+def admin_add_student(request, bus_id):
+    bus = get_object_or_404(Bus, id=bus_id)
+
     if request.method == "POST":
         form = AdminCreateStudentForm(request.POST)
         if form.is_valid():
             student = form.save(commit=False)
-            student.bus_number = bus_number
+            student.bus = bus
+            student.bus_number = bus.bus_number
             student.save()
-            student.generate_fee_records()
-            return redirect("admin_bus_students", bus_number=bus_number)
+            return redirect("admin_bus_students", bus_id=bus.id)
     else:
         form = AdminCreateStudentForm()
 
     return render(request, "core/admin_add_student.html", {
         "form": form,
-        "bus_number": bus_number
+        "bus": bus
     })
 
 
@@ -106,13 +114,15 @@ def admin_add_student(request, bus_number):
 @role_required("admin")
 def admin_edit_student(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
+
     if request.method == "POST":
-        form = AdminCreateStudentForm(request.POST, instance=student)
+        form = AdminEditStudentForm(request.POST, instance=student)
         if form.is_valid():
             form.save()
-            return redirect("admin_bus_students", bus_number=student.bus_number)
+            return redirect("admin_bus_students", bus_id=student.bus.id)
     else:
-        form = AdminCreateStudentForm(instance=student)
+        form = AdminEditStudentForm(instance=student)
+
     return render(request, "core/admin_edit_student.html", {
         "form": form,
         "student": student
@@ -123,13 +133,15 @@ def admin_edit_student(request, student_id):
 @role_required("admin")
 def admin_delete_student(request, student_id):
     student = get_object_or_404(StudentProfile, id=student_id)
-    bus_number = student.bus_number
+    bus_id = student.bus.id
+
     if request.method == "POST":
         student.user.delete()
-        return redirect("admin_bus_students", bus_number=bus_number)
+        return redirect("admin_bus_students", bus_id=bus_id)
+
     return render(request, "core/admin_delete_confirm.html", {
         "student": student,
-        "bus_number": bus_number
+        "bus_id": bus_id
     })
 
 
@@ -148,21 +160,24 @@ def admin_view_student_fees(request, student_id):
 @role_required("admin")
 def admin_fee_update(request, student_id, record_id):
     student = get_object_or_404(StudentProfile, id=student_id)
-    record = get_object_or_404(FeeRecord, id=record_id, student_profile=student)
+    record = get_object_or_404(FeeRecord, id=record_id)
+
     if request.method == "POST":
         status = request.POST.get("status")
-        if status in dict(FeeRecord.STATUS_CHOICES):
-            record.status = status
-            if status == "paid":
-                record.payment_date = timezone.now()
-                record.verification_status = "paid"
-            elif status == "unpaid":
-                record.payment_date = None
-                record.verification_status = "unpaid"
-            else:
-                record.verification_status = "pending"
-            record.save()
+        record.status = status
+
+        if status == "paid":
+            record.payment_date = timezone.now()
+            record.verification_status = "paid"
+        elif status == "unpaid":
+            record.payment_date = None
+            record.verification_status = "unpaid"
+        else:
+            record.verification_status = "pending"
+
+        record.save()
         return redirect("admin_view_student_fees", student_id=student.id)
+
     return render(request, "core/admin_fee_update.html", {
         "student": student,
         "record": record
@@ -179,16 +194,12 @@ def create_razorpay_order(request):
     month = data.get("month")
     amount = data.get("amount")
     profile = request.user.student_profile
-
     record = FeeRecord.objects.filter(student_profile=profile, month=month).first()
-    if not record:
-        return JsonResponse({"error": "fee record not found"}, status=404)
 
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    amount_paisa = int(amount) * 100
 
     order = client.order.create({
-        "amount": amount_paisa,
+        "amount": int(amount) * 100,
         "currency": "INR",
         "receipt": f"{profile.id}-{month}",
         "payment_capture": 1
@@ -205,7 +216,7 @@ def create_razorpay_order(request):
 
     return JsonResponse({
         "order_id": order["id"],
-        "amount": amount_paisa,
+        "amount": int(amount) * 100,
         "key": settings.RAZORPAY_KEY_ID
     })
 
@@ -222,20 +233,13 @@ def verify_payment(request):
     signature = data.get("razorpay_signature")
 
     order = PaymentOrder.objects.filter(order_id=order_id).first()
-    if not order:
-        return JsonResponse({"error": "order not found"}, status=404)
 
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    try:
-        client.utility.verify_payment_signature({
-            "razorpay_order_id": order_id,
-            "razorpay_payment_id": payment_id,
-            "razorpay_signature": signature
-        })
-    except:
-        order.status = "failed"
-        order.save()
-        return JsonResponse({"status": "failed"}, status=400)
+    client.utility.verify_payment_signature({
+        "razorpay_order_id": order_id,
+        "razorpay_payment_id": payment_id,
+        "razorpay_signature": signature
+    })
 
     order.payment_id = payment_id
     order.signature = signature

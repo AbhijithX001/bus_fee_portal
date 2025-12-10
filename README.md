@@ -342,9 +342,6 @@ bus_fee_portal/
 ### Razorpay Payment Window
 ![Payment Window](screenshots/payment_window.png)
 
-### Fee Records Overview
-![Fee Records](screenshots/fee_records.png)
-
 ---
 
 ## Future Enhancements

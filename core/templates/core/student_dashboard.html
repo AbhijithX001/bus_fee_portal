@@ -1,0 +1,131 @@
+{% extends "core/base.html" %}
+{% block title %}Student Dashboard — {{ profile.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="mb-4">
+    <h2 class="fw-semibold">Welcome, {{ profile.full_name }}</h2>
+    <div class="text-muted small">Class: {{ profile.student_class }}</div>
+    <div class="text-muted small">Route: {{ profile.bus_route }}</div>
+    <div class="text-muted small">Bus Number: {{ profile.bus_number }}</div>
+    <div class="text-muted small">Monthly Fee: ₹{{ profile.monthly_fee }}</div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <strong>Fee Details</strong>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Month</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for r in fee_records %}
+          <tr>
+            <td>{{ r.month }}</td>
+            <td>₹{{ r.amount }}</td>
+            <td>
+              {% if r.status == "paid" %}
+                <span class="text-success fw-semibold">Paid</span>
+              {% elif r.status == "pending" %}
+                <span class="text-warning fw-semibold">Pending</span>
+              {% else %}
+                <span class="text-danger fw-semibold">Unpaid</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.status != "paid" %}
+              <button class="btn btn-primary btn-sm"
+                      onclick="createOrder('{{ r.month }}', '{{ r.amount }}')">
+                Pay Now
+              </button>
+              {% else %}
+              <span class="text-muted small">No Action</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+function createOrder(month, amount) {
+    fetch("/payment/create-order/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify({
+            month: month,
+            amount: amount
+        }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.order_id) {
+            startPayment(data.order_id, amount, month);
+        }
+    });
+}
+
+function startPayment(orderId, amount, month) {
+
+    var options = {
+        key: "{{ razorpay_key_id }}",
+        amount: amount * 100,
+        currency: "INR",
+        name: "BusTrack Pro",
+        description: "Bus Fee Payment for " + month,
+        order_id: orderId,
+
+        handler: function (response) {
+            fetch("/payment/verify/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}",
+                },
+                body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature
+                }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    window.location.reload();
+                } else {
+                    alert("Payment verification failed.");
+                }
+            });
+        },
+
+        theme: {
+            color: "#0d6efd"
+        }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.open();
+}
+</script>
+
+{% endblock %}

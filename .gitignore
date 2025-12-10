@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.pkl
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Environment variables / Secrets
+*.env
+.env
+*.ini
+
+# Razorpay / API Keys
+rzp-key.csv
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+
+# core/migrations/
+# !core/migrations/__init__.py
+
+# Compiled
+*.so
+*.dll
+*.exe
+*.out
+
+# Cache
+*.cache
+.cache/

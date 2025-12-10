@@ -1,0 +1,53 @@
+{% extends "core/base.html" %}
+{% block title %}Bus {{ bus_number }} Students{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-semibold">Students in Bus {{ bus_number }}</h2>
+    <div>
+      <a href="{% url 'admin_add_student' bus_number %}" class="btn btn-primary btn-sm">Add Student</a>
+      <a href="{% url 'admin_bus_list' %}" class="btn btn-outline-secondary btn-sm">Back to Buses</a>
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-striped mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Route</th>
+            <th>Fee</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>{{ s.full_name }}</td>
+            <td>{{ s.student_class }}</td>
+            <td>{{ s.bus_route }}</td>
+            <td>₹{{ s.monthly_fee }}</td>
+            <td class="d-flex gap-2">
+              <a href="{% url 'admin_view_student_fees' s.id %}" class="btn btn-sm btn-outline-primary">Fees</a>
+              <a href="{% url 'admin_edit_student' s.id %}" class="btn btn-sm btn-outline-warning">Edit</a>
+              <a href="{% url 'admin_delete_student' s.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4">No students in this bus.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

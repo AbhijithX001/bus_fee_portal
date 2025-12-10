@@ -1,0 +1,34 @@
+{% extends "core/base.html" %}
+{% block title %}Update Fee — {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center py-5">
+
+  <div class="card shadow-sm p-4" style="max-width: 420px; width: 100%;">
+    <h4 class="fw-semibold mb-3">Update Fee</h4>
+
+    <div class="mb-2 small text-muted">Student</div>
+    <div class="fw-medium mb-3">{{ student.full_name }}</div>
+
+    <div class="mb-2 small text-muted">Month</div>
+    <div class="fw-medium mb-3">{{ record.month }}</div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          <option value="unpaid" {% if record.status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+          <option value="pending" {% if record.status == 'pending' %}selected{% endif %}>Pending</option>
+          <option value="paid" {% if record.status == 'paid' %}selected{% endif %}>Paid</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary">Save</button>
+      <a href="{% url 'admin_view_student_fees' student.id %}" class="btn btn-light ms-2">Cancel</a>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

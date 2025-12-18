@@ -22,10 +22,10 @@ def landing_view(request):
 
 def login_view(request):
     if request.method == "POST":
-        email = request.POST.get("username")
+        username = request.POST.get("username")
         password = request.POST.get("password")
 
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, username=username, password=password)
 
         if user:
             login(request, user)
@@ -81,7 +81,6 @@ def admin_add_bus(request):
             return redirect("admin_bus_list")
     else:
         form = BusForm()
-
     return render(request, "core/admin_add_bus.html", {"form": form})
 
 

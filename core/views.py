@@ -2,6 +2,7 @@ import json
 import hmac
 import hashlib
 import razorpay
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -21,15 +22,21 @@ def landing_view(request):
 
 def login_view(request):
     if request.method == "POST":
-        username = request.POST.get("username")
+        email = request.POST.get("username")
         password = request.POST.get("password")
-        user = authenticate(request, username=username, password=password)
+
+        user = authenticate(request, email=email, password=password)
+
         if user:
             login(request, user)
             if hasattr(user, "student_profile"):
                 return redirect("student_dashboard")
             return redirect("admin_dashboard")
-        return render(request, "core/login.html", {"error": "Invalid username or password"})
+
+        return render(request, "core/login.html", {
+            "error": "Invalid username or password"
+        })
+
     return render(request, "core/login.html")
 
 
@@ -74,6 +81,7 @@ def admin_add_bus(request):
             return redirect("admin_bus_list")
     else:
         form = BusForm()
+
     return render(request, "core/admin_add_bus.html", {"form": form})
 
 
@@ -159,7 +167,6 @@ def admin_view_student_fees(request, student_id):
 @login_required
 @role_required("admin")
 def admin_fee_update(request, student_id, record_id):
-    student = get_object_or_404(StudentProfile, id=student_id)
     record = get_object_or_404(FeeRecord, id=record_id)
 
     if request.method == "POST":
@@ -169,17 +176,14 @@ def admin_fee_update(request, student_id, record_id):
         if status == "paid":
             record.payment_date = timezone.now()
             record.verification_status = "paid"
-        elif status == "unpaid":
+        else:
             record.payment_date = None
             record.verification_status = "unpaid"
-        else:
-            record.verification_status = "pending"
 
         record.save()
-        return redirect("admin_view_student_fees", student_id=student.id)
+        return redirect("admin_view_student_fees", student_id=student_id)
 
     return render(request, "core/admin_fee_update.html", {
-        "student": student,
         "record": record
     })
 
@@ -187,12 +191,10 @@ def admin_fee_update(request, student_id, record_id):
 @login_required
 @role_required("student")
 def create_razorpay_order(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "invalid method"}, status=405)
-
     data = json.loads(request.body.decode("utf-8"))
-    month = data.get("month")
     amount = data.get("amount")
+    month = data.get("month")
+
     profile = request.user.student_profile
     record = FeeRecord.objects.filter(student_profile=profile, month=month).first()
 
@@ -201,7 +203,6 @@ def create_razorpay_order(request):
     order = client.order.create({
         "amount": int(amount) * 100,
         "currency": "INR",
-        "receipt": f"{profile.id}-{month}",
         "payment_capture": 1
     })
 
@@ -209,14 +210,13 @@ def create_razorpay_order(request):
         student=profile,
         fee_record=record,
         month=month,
-        amount=int(amount),
+        amount=amount,
         order_id=order["id"],
         status="created"
     )
 
     return JsonResponse({
         "order_id": order["id"],
-        "amount": int(amount) * 100,
         "key": settings.RAZORPAY_KEY_ID
     })
 
@@ -224,22 +224,12 @@ def create_razorpay_order(request):
 @login_required
 @role_required("student")
 def verify_payment(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "invalid method"}, status=405)
-
     data = json.loads(request.body.decode("utf-8"))
     order_id = data.get("razorpay_order_id")
     payment_id = data.get("razorpay_payment_id")
     signature = data.get("razorpay_signature")
 
-    order = PaymentOrder.objects.filter(order_id=order_id).first()
-
-    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    client.utility.verify_payment_signature({
-        "razorpay_order_id": order_id,
-        "razorpay_payment_id": payment_id,
-        "razorpay_signature": signature
-    })
+    order = PaymentOrder.objects.get(order_id=order_id)
 
     order.payment_id = payment_id
     order.signature = signature
@@ -258,9 +248,6 @@ def verify_payment(request):
 
 @csrf_exempt
 def razorpay_webhook(request):
-    if request.method != "POST":
-        return HttpResponseForbidden()
-
     body = request.body
     received = request.META.get("HTTP_X_RAZORPAY_SIGNATURE", "")
     secret = settings.RAZORPAY_WEBHOOK_SECRET
@@ -268,23 +255,5 @@ def razorpay_webhook(request):
 
     if not hmac.compare_digest(received, expected):
         return HttpResponseForbidden()
-
-    data = json.loads(body.decode("utf-8"))
-    payment = data.get("payload", {}).get("payment", {}).get("entity", {})
-    order_id = payment.get("order_id")
-    payment_id = payment.get("id")
-
-    order = PaymentOrder.objects.filter(order_id=order_id).first()
-    if order:
-        order.payment_id = payment_id
-        order.status = "paid"
-        order.save()
-
-        record = order.fee_record
-        record.status = "paid"
-        record.payment_date = timezone.now()
-        record.transaction_id = payment_id
-        record.verification_status = "paid"
-        record.save()
 
     return HttpResponse(status=200)

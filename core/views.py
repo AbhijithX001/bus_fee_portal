@@ -180,7 +180,8 @@ def admin_fee_update(request, student_id, record_id):
             record.verification_status = "unpaid"
 
         record.save()
-        return redirect("admin_view_student_fees", student_id=student_id)
+        return redirect("admin_view_student_fees", student_id)
+
 
     return render(request, "core/admin_fee_update.html", {
         "record": record

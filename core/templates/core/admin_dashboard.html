@@ -4,7 +4,12 @@
 {% block content %}
 <div class="container py-4">
 
-  <h2 class="fw-semibold mb-4">Bus List</h2>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-semibold">Bus List</h2>
+    <a href="{% url 'admin_add_bus' %}" class="btn btn-primary btn-sm">
+      + Add Bus
+    </a>
+  </div>
 
   <div class="card">
     <table class="table table-striped mb-0">
@@ -25,17 +30,18 @@
           <td>{{ bus.bus_name }}</td>
           <td>{{ bus.driver_name }}</td>
           <td>{{ bus.driver_phone }}</td>
-
-          <!-- FIXED -->
           <td>{{ bus.students.count }}</td>
-
           <td>
-            <a href="{% url 'admin_bus_students' bus.id %}" class="btn btn-sm btn-outline-primary">Open</a>
+            <a href="{% url 'admin_bus_students' bus.id %}" class="btn btn-sm btn-outline-primary">
+              View
+            </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center py-4">No buses available.</td>
+          <td colspan="6" class="text-center py-3">
+            No buses available.
+          </td>
         </tr>
         {% endfor %}
       </tbody>

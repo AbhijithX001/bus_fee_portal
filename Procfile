@@ -1,1 +1,1 @@
-web: python manage.py migrate --noinput && python manage.py createsuperuser --noinput || true && gunicorn bus_fee_portal.wsgi
+web: python manage.py migrate --noinput && python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin','admin@example.com','admin123')" && gunicorn bus_fee_portal.wsgi

@@ -24,11 +24,16 @@ else:
     else:
         print('Admin already exists');
 
-if not Bus.objects.filter(bus_number='Bus 1').exists():
-    test_bus = Bus.objects.create(bus_number='Bus 1', route_name='Test Route');
+if not Bus.objects.filter(bus_number=1).exists():
+    test_bus = Bus.objects.create(
+        bus_number=1,
+        bus_name='Test Route A',
+        driver_name='Test Driver',
+        driver_phone='9876543210'
+    );
     print('Test bus created');
 else:
-    test_bus = Bus.objects.get(bus_number='Bus 1');
+    test_bus = Bus.objects.get(bus_number=1);
     print('Test bus already exists');
 
 if not User.objects.filter(username='test_student').exists():
@@ -40,9 +45,9 @@ if not User.objects.filter(username='test_student').exists():
         full_name='Test Student',
         student_class='10th Grade',
         bus=test_bus,
-        bus_number='Bus 1',
+        bus_number=1,
         pickup_location='Test Location',
-        bus_route='Test Route',
+        bus_route='Test Route A',
         monthly_fee=500.00,
         parent_phone_number='1234567890',
         address='Test Address'

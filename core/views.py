@@ -29,9 +29,11 @@ def login_view(request):
 
         if user:
             login(request, user)
-            if hasattr(user, "student_profile"):
+            if user.role == "student" and hasattr(user, "student_profile"):
                 return redirect("student_dashboard")
-            return redirect("admin_dashboard")
+            elif user.role == "admin":
+                return redirect("admin_dashboard")
+            return redirect("login")
 
         return render(request, "core/login.html", {
             "error": "Invalid username or password"

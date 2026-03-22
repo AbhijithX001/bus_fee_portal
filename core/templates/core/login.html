@@ -2,10 +2,11 @@
 {% block title %}Login — BusTrack Pro{% endblock %}
 
 {% block content %}
-<div class="container d-flex justify-content-center py-5">
-
-  <div class="card shadow-sm p-4" style="max-width: 420px; width: 100%;">
-    <h3 class="mb-3 fw-semibold">Sign In</h3>
+<div class="container d-flex justify-content-center align-items-center auth-wrap py-5">
+  <div class="card auth-card p-4 p-lg-5">
+    <p class="text-uppercase small fw-semibold text-primary mb-2">Welcome Back</p>
+    <h3 class="mb-3 fw-semibold">Sign In to BusTrack Pro</h3>
+    <p class="text-muted mb-4">Use your account credentials to access student or admin tools.</p>
 
     {% if error %}
       <div class="alert alert-danger py-2">{{ error }}</div>
@@ -24,9 +25,8 @@
         <input name="password" type="password" class="form-control" required>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100 mt-2">Login</button>
+      <button type="submit" class="btn btn-primary w-100 mt-2">Continue</button>
     </form>
   </div>
-
 </div>
 {% endblock %}

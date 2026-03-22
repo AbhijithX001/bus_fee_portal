@@ -30,11 +30,11 @@
             <td>₹{{ r.amount }}</td>
             <td>
               {% if r.status == 'paid' %}
-                <span class="text-success fw-semibold">Paid</span>
+                <span class="status-paid">Paid</span>
               {% elif r.status == 'pending' %}
-                <span class="text-warning fw-semibold">Pending</span>
+                <span class="status-pending">Pending</span>
               {% else %}
-                <span class="text-danger fw-semibold">Unpaid</span>
+                <span class="status-unpaid">Unpaid</span>
               {% endif %}
             </td>
           </tr>
